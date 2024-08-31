@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VLOCKS Code Editor</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(90deg, black, red, black, red);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: gradient-animation 10s ease infinite;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .error-message {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            color: red;
+            font-size: 14px;
+            display: none;
+        }
+        @keyframes gradient-animation {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+        .header-right {
+            text-align: right;
+        }
+        .small-text {
+            font-size: 14px;
+            color: red;
+        }
+        .theme-toggle-button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: white;
+            cursor: pointer;
+        }
+        .theme-toggle-button.light {
+            background-color: #333;
+            color: white;
+        }
+        .theme-toggle-button.dark {
+            background-color: #ccc;
+            color: black;
+        }
+        .dark-theme {
+            background-color: #222;
+            color: #ddd;
+        }
+        .dark-theme header {
+            background-color: #333;
+        }
+        .dark-theme .editor-container {
+            background-color: #333;
+            border: 1px solid #555;
+        }
+        .dark-theme .editor {
+            background-color: #222;
+            color: #ddd;
+            border: 1px solid #555;
+        }
+        .grid-container {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        .grid-item {
+            width: 400px;
+            height: 400px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .html {
+            border: 5px solid lightgreen;
+        }
+        .css {
+            border: 5px solid skyblue;
+        }
+        .javascript {
+            border: 5px solid red;
+        }
+        .grid-item span {
+            display: block;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            margin-top: 20px;
+        }
+        .editor {
+            width: calc(100% - 40px);
+            height: 300px;
+            padding: 10px;
+            font-family: monospace;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            resize: none;
+            overflow: hidden;
+            position: relative;
+        }
+        .line-numbers {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 100%;
+            background: #eee;
+            border-right: 1px solid #ddd;
+            text-align: right;
+            padding-right: 5px;
+            box-sizing: border-box;
+            color: #666;
+            font-size: 14px;
+            user-select: none;
+        }
+        .center-button-container {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            gap: 10px;
+        }
+        .rounded-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .rounded-button.horizontal {
+            background: linear-gradient(90deg, blue, green, red);
+            background-size: 300% 300%;
+            animation: gradient-button-horizontal 5s ease infinite;
+        }
+        @keyframes gradient-button-horizontal {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+        .rounded-button.vertical {
+            background: linear-gradient(180deg, blue, green, red);
+            background-size: 300% 300%;
+            animation: gradient-button-vertical 5s ease infinite;
+        }
+        @keyframes gradient-button-vertical {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 0% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+        .rounded-button:hover {
+            opacity: 0.9;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto 0 auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 700px;
+            height: 720px;
+            position: relative;
+        }
+        .modal-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: red;
+        }
+        .storage-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .storage-button:hover {
+            opacity: 0.9;
+        }
+        #saved-works-container {
+            overflow-y: auto;
+            max-height: 100%;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <div class="title">VLOCKS <span class="error-message" id="html-error">Invalid HTML</span></div>
+        </div>
+        <div class="header-right">
+            <div class="small-text">by MKB20/24</div>
+            <button class="theme-toggle-button light" onclick="toggleTheme()">Toggle Theme</button>
+        </div>
+    </header>
+
+    <div class="grid-container">
+        <div class="grid-item html">
+            <span>*html</span>
+            <div class="error-message" id="html-error">Invalid HTML</div>
+            <div class="editor-container">
+                <div class="line-numbers" id="html-line-numbers"></div>
+                <textarea id="html-editor" class="editor" placeholder="Enter HTML code here..."></textarea>
+            </div>
+        </div>
+        <div class="grid-item css">
+            <span>*css</span>
+            <div class="error-message" id="css-error">Invalid CSS</div>
+            <div class="editor-container">
+                <div class="line-numbers" id="css-line-numbers"></div>
+                <textarea id="css-editor" class="editor" placeholder="Enter CSS code here..."></textarea>
+            </div>
+        </div>
+        <div class="grid-item javascript">
+            <span>*java script</span>
+            <div class="error-message" id="js-error">Invalid JavaScript</div>
+            <div class="editor-container">
+                <div class="line-numbers" id="js-line-numbers"></div>
+                <textarea id="js-editor" class="editor" placeholder="Enter JavaScript code here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="center-button-container">
+        <button class="rounded-button horizontal" onclick="showPreview()">Preview</button>
+        <button class="rounded-button vertical save" onclick="saveToLocalStorage()">SAVE</button>
+    </div>
+
+    <div id="preview-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePreview()">&times;</span>
+            <iframe id="preview-frame"></iframe>
+        </div>
+    </div>
+
+    <div id="storage-modal" class="modal">
+        <div class="modal-content" style="width: 300px; height: 300px;">
+            <span class="close" onclick="closeStorage()">&times;</span>
+            <div id="saved-works-container">
+                <!-- Saved works will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <button class="storage-button" onclick="openStorage()">Storage</button>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const button = document.querySelector('.theme-toggle-button');
+            body.classList.toggle('dark-theme');
+            button.classList.toggle('dark');
+            button.classList.toggle('light');
+        }
+
+        function showPreview() {
+            const htmlCode = document.getElementById('html-editor').value;
+            const cssCode = document.getElementById('css-editor').value;
+            const jsCode = document.getElementById('js-editor').value;
+            const iframe = document.getElementById('preview-frame');
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>${cssCode}</style>
+                </head>
+                <body>
+                    ${htmlCode}
+                    <script>${jsCode}<\/script>
+                </body>
+                </html>
+            `);
+            iframe.contentDocument.close();
+            document.getElementById('preview-modal').style.display = 'flex';
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').style.display = 'none';
+        }
+
+        function saveToLocalStorage() {
+            const htmlCode = document.getElementById('html-editor').value;
+            const cssCode = document.getElementById('css-editor').value;
+            const jsCode = document.getElementById('js-editor').value;
+            const date = new Date().toLocaleString();
+            
+            const savedWorks = JSON.parse(localStorage.getItem('savedWorks')) || [];
+            savedWorks.push({ htmlCode, cssCode, jsCode, date });
+            localStorage.setItem('savedWorks', JSON.stringify(savedWorks));
+            
+            updateSavedWorks();
+        }
+
+        function updateSavedWorks() {
+            const savedWorksContainer = document.getElementById('saved-works-container');
+            const savedWorks = JSON.parse(localStorage.getItem('savedWorks')) || [];
+            
+            savedWorksContainer.innerHTML = savedWorks.map(work => `
+                <div>
+                    <p>Date: ${work.date}</p>
+                    <button onclick='loadSavedWork(${JSON.stringify(work)})'>Load</button>
+                </div>
+            `).join('');
+        }
+
+        function loadSavedWork(work) {
+            document.getElementById('html-editor').value = work.htmlCode;
+            document.getElementById('css-editor').value = work.cssCode;
+            document.getElementById('js-editor').value = work.jsCode;
+            showPreview();
+        }
+
+        function openStorage() {
+            document.getElementById('storage-modal').style.display = 'flex';
+        }
+
+        function closeStorage() {
+            document.getElementById('storage-modal').style.display = 'none';
+        }
+
+        window.addEventListener('load', updateSavedWorks);
+
+        // Add line numbers to the editors
+        function addLineNumbers(editorId, lineNumberId) {
+            const editor = document.getElementById(editorId);
+            const lineNumbers = document.getElementById(lineNumberId);
+            editor.addEventListener('input', () => {
+                const lines = editor.value.split('\n').length;
+                lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+            });
+        }
+
+        addLineNumbers('html-editor', 'html-line-numbers');
+        addLineNumbers('css-editor', 'css-line-numbers');
+        addLineNumbers('js-editor', 'js-line-numbers');
+    </script>
+</body>
+</html>
